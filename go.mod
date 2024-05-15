@@ -1,4 +1,4 @@
-module github.com/gopkg-utils/object
+module github.com/go-pkg-utils/object
 
 go 1.18
 
