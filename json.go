@@ -8,27 +8,27 @@ import (
 )
 
 func NewWithJson[T Struct](json string) *T {
-	return SetJsonValue(NewWithDefault[T](), json)
+	return SetJson(NewWithDefault[T](), json)
 }
 
-func SetJsonValue[T Struct](obj *T, json string) *T {
-	viper := viper.New()
-	viper.SetConfigType("json")
-	if err := viper.MergeConfig(bytes.NewReader([]byte(json))); err == nil {
-		setJsonValue(reflect.ValueOf(obj), viper)
+func SetJson[T Struct](obj *T, json string) *T {
+	_json := viper.New()
+	_json.SetConfigType("json")
+	if err := _json.MergeConfig(bytes.NewReader([]byte(json))); err == nil {
+		setJson(reflect.ValueOf(obj), _json)
 	}
 
 	return obj
 }
 
-func setJsonValue(obj reflect.Value, viper *viper.Viper) {
+func setJson(obj reflect.Value, json *viper.Viper) {
 	// nil pointer
 	if obj.Kind() == reflect.Ptr && obj.IsNil() {
 		return
 	}
 
 	if obj.Type().Kind() == reflect.Ptr {
-		setJsonValue(obj.Elem(), viper)
+		setJson(obj.Elem(), json)
 		return
 	}
 
@@ -36,7 +36,7 @@ func setJsonValue(obj reflect.Value, viper *viper.Viper) {
 		return
 	}
 
-	if viper == nil || len(viper.AllKeys()) == 0 {
+	if json == nil || len(json.AllKeys()) == 0 {
 		return
 	}
 
@@ -47,19 +47,19 @@ func setJsonValue(obj reflect.Value, viper *viper.Viper) {
 		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
 			if f := obj.FieldByName(field.Name); !f.IsNil() { // init field value
 				key, _ := field.Tag.Lookup("json")
-				setJsonValue(obj.FieldByName(field.Name).Elem(), getSubViper(viper, key))
+				setJson(obj.FieldByName(field.Name).Elem(), getSubViper(json, key))
 			} else if f.CanSet() { // unint field value
 				obj.FieldByName(field.Name).Set(reflect.New(field.Type.Elem()))
 
 				key, _ := field.Tag.Lookup("json")
-				setJsonValue(obj.FieldByName(field.Name).Elem(), getSubViper(viper, key))
+				setJson(obj.FieldByName(field.Name).Elem(), getSubViper(json, key))
 			}
 		} else if field.Type.Kind() == reflect.Struct {
 			key, _ := field.Tag.Lookup("json")
-			setJsonValue(obj.FieldByName(field.Name), getSubViper(viper, key))
-		} else if key, ok := field.Tag.Lookup("json"); ok && viper.IsSet(key) {
+			setJson(obj.FieldByName(field.Name), getSubViper(json, key))
+		} else if key, ok := field.Tag.Lookup("json"); ok && json.IsSet(key) {
 			if setValue, ok := setValueMap[field.Type.Kind()]; ok {
-				setValue(obj.FieldByName(field.Name), viper.GetString(key))
+				setValue(obj.FieldByName(field.Name), json.GetString(key))
 			}
 		}
 	}

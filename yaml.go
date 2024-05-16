@@ -6,24 +6,24 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewWithYaml[T Struct](viper *viper.Viper) *T {
-	return SetYamlValue(NewWithDefault[T](), viper)
+func NewWithYaml[T Struct](yaml *viper.Viper) *T {
+	return SetYaml(NewWithDefault[T](), yaml)
 }
 
-func SetYamlValue[T Struct](obj *T, viper *viper.Viper) *T {
-	setYamlValue(reflect.ValueOf(obj), viper)
+func SetYaml[T Struct](obj *T, yaml *viper.Viper) *T {
+	setYaml(reflect.ValueOf(obj), yaml)
 
 	return obj
 }
 
-func setYamlValue(obj reflect.Value, viper *viper.Viper) {
+func setYaml(obj reflect.Value, yaml *viper.Viper) {
 	// nil pointer
 	if obj.Kind() == reflect.Ptr && obj.IsNil() {
 		return
 	}
 
 	if obj.Type().Kind() == reflect.Ptr {
-		setYamlValue(obj.Elem(), viper)
+		setYaml(obj.Elem(), yaml)
 		return
 	}
 
@@ -31,7 +31,7 @@ func setYamlValue(obj reflect.Value, viper *viper.Viper) {
 		return
 	}
 
-	if viper == nil || len(viper.AllKeys()) == 0 {
+	if yaml == nil || len(yaml.AllKeys()) == 0 {
 		return
 	}
 
@@ -42,28 +42,28 @@ func setYamlValue(obj reflect.Value, viper *viper.Viper) {
 		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
 			if f := obj.FieldByName(field.Name); !f.IsNil() { // init field value
 				key, _ := field.Tag.Lookup("yaml")
-				setYamlValue(obj.FieldByName(field.Name).Elem(), getSubViper(viper, key))
+				setYaml(obj.FieldByName(field.Name).Elem(), getSubViper(yaml, key))
 			} else if f.CanSet() { // unint field value
 				obj.FieldByName(field.Name).Set(reflect.New(field.Type.Elem()))
 
 				key, _ := field.Tag.Lookup("yaml")
-				setYamlValue(obj.FieldByName(field.Name).Elem(), getSubViper(viper, key))
+				setYaml(obj.FieldByName(field.Name).Elem(), getSubViper(yaml, key))
 			}
 		} else if field.Type.Kind() == reflect.Struct {
 			key, _ := field.Tag.Lookup("yaml")
-			setYamlValue(obj.FieldByName(field.Name), getSubViper(viper, key))
-		} else if key, ok := field.Tag.Lookup("yaml"); ok && viper.IsSet(key) {
+			setYaml(obj.FieldByName(field.Name), getSubViper(yaml, key))
+		} else if key, ok := field.Tag.Lookup("yaml"); ok && yaml.IsSet(key) {
 			if setValue, ok := setValueMap[field.Type.Kind()]; ok {
-				setValue(obj.FieldByName(field.Name), viper.GetString(key))
+				setValue(obj.FieldByName(field.Name), yaml.GetString(key))
 			}
 		}
 	}
 }
 
-func getSubViper(viper *viper.Viper, key string) *viper.Viper {
-	if viper == nil || key == "" || !viper.IsSet(key) {
-		return viper
+func getSubViper(yaml *viper.Viper, key string) *viper.Viper {
+	if yaml == nil || key == "" || !yaml.IsSet(key) {
+		return yaml
 	}
 
-	return viper.Sub(key)
+	return yaml.Sub(key)
 }
