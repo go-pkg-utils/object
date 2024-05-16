@@ -4,11 +4,11 @@ import (
 	"reflect"
 )
 
-func NewWithDefault[T any]() *T {
+func NewWithDefault[T Struct]() *T {
 	return SetDefaultValue(new(T))
 }
 
-func SetDefaultValue[T any](obj *T) *T {
+func SetDefaultValue[T Struct](obj *T) *T {
 	setDefaultValue(reflect.ValueOf(obj))
 
 	return obj

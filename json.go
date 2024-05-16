@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewWithJson[T any](json string) *T {
+func NewWithJson[T Struct](json string) *T {
 	return SetJsonValue(NewWithDefault[T](), json)
 }
 
-func SetJsonValue[T any](obj *T, json string) *T {
+func SetJsonValue[T Struct](obj *T, json string) *T {
 	viper := viper.New()
 	viper.SetConfigType("json")
 	if err := viper.MergeConfig(bytes.NewReader([]byte(json))); err == nil {
@@ -22,10 +22,6 @@ func SetJsonValue[T any](obj *T, json string) *T {
 }
 
 func setJsonValue(obj reflect.Value, viper *viper.Viper) {
-	if viper == nil {
-		return
-	}
-
 	// nil pointer
 	if obj.Kind() == reflect.Ptr && obj.IsNil() {
 		return
@@ -37,6 +33,10 @@ func setJsonValue(obj reflect.Value, viper *viper.Viper) {
 	}
 
 	if obj.Type().Kind() != reflect.Struct {
+		return
+	}
+
+	if viper == nil || len(viper.AllKeys()) == 0 {
 		return
 	}
 

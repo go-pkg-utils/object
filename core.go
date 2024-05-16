@@ -6,6 +6,8 @@ import (
 	"unsafe"
 )
 
+type Struct = interface{}
+
 var setValueMap = map[reflect.Kind]func(field reflect.Value, value string){
 	reflect.String: func(field reflect.Value, value string) {
 		if v, err := value, error(nil); err == nil {

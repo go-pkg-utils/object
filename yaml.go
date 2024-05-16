@@ -6,21 +6,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-func NewWithYaml[T any](viper *viper.Viper) *T {
+func NewWithYaml[T Struct](viper *viper.Viper) *T {
 	return SetYamlValue(NewWithDefault[T](), viper)
 }
 
-func SetYamlValue[T any](obj *T, viper *viper.Viper) *T {
+func SetYamlValue[T Struct](obj *T, viper *viper.Viper) *T {
 	setYamlValue(reflect.ValueOf(obj), viper)
 
 	return obj
 }
 
 func setYamlValue(obj reflect.Value, viper *viper.Viper) {
-	if viper == nil {
-		return
-	}
-
 	// nil pointer
 	if obj.Kind() == reflect.Ptr && obj.IsNil() {
 		return
@@ -32,6 +28,10 @@ func setYamlValue(obj reflect.Value, viper *viper.Viper) {
 	}
 
 	if obj.Type().Kind() != reflect.Struct {
+		return
+	}
+
+	if viper == nil || len(viper.AllKeys()) == 0 {
 		return
 	}
 
