@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"reflect"
 
+	"github.com/go-pkg-utils/object/internal"
 	"github.com/spf13/viper"
 )
 
-func NewWithJson[T Struct](json string) *T {
-	return SetJson(NewWithDefault[T](), json)
+func NewWithJson[T internal.Struct](json string) *T {
+	return SetJson(NewWithDefaults[T](), json)
 }
 
-func SetJson[T Struct](obj *T, json string) *T {
+func SetJson[T internal.Struct](obj *T, json string) *T {
 	_json := viper.New()
 	_json.SetConfigType("json")
 	if err := _json.MergeConfig(bytes.NewReader([]byte(json))); err == nil {
@@ -58,7 +59,7 @@ func setJson(obj reflect.Value, json *viper.Viper) {
 			key, _ := field.Tag.Lookup("json")
 			setJson(obj.FieldByName(field.Name), getSubViper(json, key))
 		} else if key, ok := field.Tag.Lookup("json"); ok && json.IsSet(key) {
-			if setValue, ok := setValueMap[field.Type.Kind()]; ok {
+			if setValue, ok := internal.SetValueMap[field.Type.Kind()]; ok {
 				setValue(obj.FieldByName(field.Name), json.GetString(key))
 			}
 		}

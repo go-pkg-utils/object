@@ -2,26 +2,28 @@ package object
 
 import (
 	"reflect"
+
+	"github.com/go-pkg-utils/object/internal"
 )
 
-func NewWithDefault[T Struct]() *T {
-	return SetDefault(new(T))
+func NewWithDefaults[T internal.Struct]() *T {
+	return SetDefaults(new(T))
 }
 
-func SetDefault[T Struct](obj *T) *T {
-	setDefault(reflect.ValueOf(obj))
+func SetDefaults[T internal.Struct](obj *T) *T {
+	setDefaults(reflect.ValueOf(obj))
 
 	return obj
 }
 
-func setDefault(obj reflect.Value) {
+func setDefaults(obj reflect.Value) {
 	// nil pointer
 	if obj.Kind() == reflect.Ptr && obj.IsNil() {
 		return
 	}
 
 	if obj.Type().Kind() == reflect.Ptr {
-		setDefault(obj.Elem())
+		setDefaults(obj.Elem())
 		return
 	}
 
@@ -35,15 +37,15 @@ func setDefault(obj reflect.Value) {
 		// *struct{}
 		if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
 			if f := obj.FieldByName(field.Name); !f.IsNil() { // init field value
-				setDefault(obj.FieldByName(field.Name).Elem())
+				setDefaults(obj.FieldByName(field.Name).Elem())
 			} else if f.CanSet() { // unint field value
 				obj.FieldByName(field.Name).Set(reflect.New(field.Type.Elem()))
-				setDefault(obj.FieldByName(field.Name).Elem())
+				setDefaults(obj.FieldByName(field.Name).Elem())
 			}
 		} else if field.Type.Kind() == reflect.Struct {
-			setDefault(obj.FieldByName(field.Name))
+			setDefaults(obj.FieldByName(field.Name))
 		} else if value, ok := field.Tag.Lookup("default"); ok {
-			if setValue, ok := setValueMap[field.Type.Kind()]; ok {
+			if setValue, ok := internal.SetValueMap[field.Type.Kind()]; ok {
 				setValue(obj.FieldByName(field.Name), value)
 			}
 		}

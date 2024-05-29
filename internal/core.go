@@ -1,4 +1,4 @@
-package object
+package internal
 
 import (
 	"reflect"
@@ -8,7 +8,7 @@ import (
 
 type Struct = interface{}
 
-var setValueMap = map[reflect.Kind]func(field reflect.Value, value string){
+var SetValueMap = map[reflect.Kind]func(field reflect.Value, value string){
 	reflect.String: func(field reflect.Value, value string) {
 		if v, err := value, error(nil); err == nil {
 			*(*string)(unsafe.Pointer(field.UnsafeAddr())) = v

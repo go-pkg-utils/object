@@ -3,14 +3,15 @@ package object
 import (
 	"reflect"
 
+	"github.com/go-pkg-utils/object/internal"
 	"github.com/spf13/viper"
 )
 
-func NewWithYaml[T Struct](yaml *viper.Viper) *T {
-	return SetYaml(NewWithDefault[T](), yaml)
+func NewWithYaml[T internal.Struct](yaml *viper.Viper) *T {
+	return SetYaml(NewWithDefaults[T](), yaml)
 }
 
-func SetYaml[T Struct](obj *T, yaml *viper.Viper) *T {
+func SetYaml[T internal.Struct](obj *T, yaml *viper.Viper) *T {
 	setYaml(reflect.ValueOf(obj), yaml)
 
 	return obj
@@ -53,7 +54,7 @@ func setYaml(obj reflect.Value, yaml *viper.Viper) {
 			key, _ := field.Tag.Lookup("yaml")
 			setYaml(obj.FieldByName(field.Name), getSubViper(yaml, key))
 		} else if key, ok := field.Tag.Lookup("yaml"); ok && yaml.IsSet(key) {
-			if setValue, ok := setValueMap[field.Type.Kind()]; ok {
+			if setValue, ok := internal.SetValueMap[field.Type.Kind()]; ok {
 				setValue(obj.FieldByName(field.Name), yaml.GetString(key))
 			}
 		}
